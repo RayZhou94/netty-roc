@@ -1,8 +1,8 @@
 package remoting;
 
-import common.Request;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.ToString;
 
 import java.io.Serializable;
 
@@ -11,10 +11,11 @@ import java.io.Serializable;
  */
 @Data
 @AllArgsConstructor
-@Deprecated
-public class DefaultRequest implements Serializable {
+@ToString
+public class Request implements Serializable {
+    private static final long serialVersionUID = -535972098007650942L;
 
     private String uuid;
 
-    private Object request;
+    private Object data;
 }

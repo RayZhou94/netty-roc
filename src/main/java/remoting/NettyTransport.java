@@ -16,12 +16,12 @@ public class NettyTransport {
     static NettyClient nettyClient = new NettyClient("localhost", 8001, clientInvocationHandler);
 
     public Future send(Object msg){
-        Message message = new Message(UUID.randomUUID().toString(), msg);
+        Request request = new Request(UUID.randomUUID().toString(), msg);
         ExecutorService executorService = RpcThreadPool.executorService();
         executorService.execute(()->{
             nettyClient.connect();
         });
-        return clientInvocationHandler.sendMessage(message);
+        return clientInvocationHandler.sendMessage(request);
     }
 
 }

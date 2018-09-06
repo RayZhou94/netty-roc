@@ -36,19 +36,17 @@ public class NettyHandler extends ChannelInboundHandlerAdapter {
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.info("{} connected", handler.getClass().getSimpleName());
-        handler.init(ctx.channel());
+        handler.channelActive(ctx);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        Thread.sleep(5000);
-        ByteBuf in = (ByteBuf) msg;
-        byte[] req = new byte[in.readableBytes()];
-        in.readBytes(req);
-        Message message = (Message) SerializationUtil.deserialize(req);
+        handler.channelRead(ctx, msg);
+    }
 
-        log.info("{} get a message: {}", handler.getClass().getSimpleName(), message);
-        handler.invoke(ctx.channel(), message);
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        handler.channelActive(ctx);
     }
 
 }

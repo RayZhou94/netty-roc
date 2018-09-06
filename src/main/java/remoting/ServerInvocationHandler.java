@@ -1,10 +1,11 @@
 package remoting;
 
+import common.Response;
 import common.Future;
-import common.Request;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import proxy.MethodHandler;
 import serialization.SerializationUtil;
@@ -17,10 +18,6 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
 
     private MethodHandler methodHandler;
 
-    @Override
-    void init(Channel channel) {
-
-    }
 
     public void setMethodHandler(MethodHandler methodHandler){
         this.methodHandler = methodHandler;
@@ -32,20 +29,19 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
      * @param message
      * @return
      */
-    @Override
-    Future invoke(Channel channel, Message message) {
+    Future invoke(Channel channel, Request message) {
         log.info("server handler invoke a message {}", message);
-        Request request = (Request) message.getData();
+        common.Request request = (common.Request) message.getData();
 
         //拿到消息中的请求后，解析消息里的方法，进行真正的调用，并且返回结果
         Future future =  methodHandler.process(request);
         Object result = future.get();
         //将结果封装到DefaultResponse中，然后返回
-        DefaultResponse defaultResponse = new DefaultResponse();
+        Response defaultResponse = new Response();
         defaultResponse.setUuid(message.getUuid());
         defaultResponse.setResponse(result);
 
-        Message response = new Message(defaultResponse.getUuid(), defaultResponse.getResponse());
+        Request response = new Request(defaultResponse.getUuid(), defaultResponse.getResponse());
         //返回调用结果给客户端
         byte[] req = SerializationUtil.serialize(response);
         ByteBuf m = Unpooled.buffer(req.length);
@@ -53,5 +49,22 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
         channel.writeAndFlush(m);
 
         return future;
+    }
+
+    @Override
+    void channelActive(ChannelHandlerContext ctx) {
+
+    }
+
+    @Override
+    void channelInactive(ChannelHandlerContext ctx) {
+
+    }
+
+    @Override
+    void channelRead(ChannelHandlerContext ctx, Object msg) {
+        log.info("server handler invoke a message {}", msg);
+//        ByteBuf m = Unpooled.buffer(msg);
+//        Request request = SerializationUtil.deserialize()
     }
 }

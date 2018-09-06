@@ -1,9 +1,11 @@
-package remoting;
+package common;
 
 
+import common.Response;
 import common.Future;
 import io.netty.channel.Channel;
 import lombok.Data;
+import remoting.NettyFactory;
 
 /**
  * Created by shallowdream on 2018/8/3.
@@ -12,7 +14,7 @@ import lombok.Data;
 @Data
 public class DefaultFuture implements Future {
 
-    private volatile DefaultResponse defaultResponse;
+    private volatile Response response;
 
     private Long createTime;
 
@@ -28,15 +30,15 @@ public class DefaultFuture implements Future {
     public Object get(){
         if (isDone()){
             //拿到数据后，就删除容器中的数据
-            NettyFactory.unRegisterCallbackMap(defaultResponse.getUuid());
-            return defaultResponse;
+            NettyFactory.unRegisterCallbackMap(response.getUuid());
+            return response;
         }
         return null;
     }
 
     @Override
     public boolean isDone() {
-        while (defaultResponse == null) {
+        while (response == null) {
         }
         return true;
     }

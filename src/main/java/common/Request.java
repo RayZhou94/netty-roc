@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @Data
-public class Request implements Serializable {
+public class Request extends Message implements Serializable {
 
     private String serviceName;
 

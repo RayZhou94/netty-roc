@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package remoting;
+package common;
 
 import lombok.Data;
 import lombok.ToString;
@@ -26,11 +26,9 @@ import java.io.Serializable;
  */
 @Data
 @ToString
-public class DefaultResponse implements Serializable {
+public class Response extends Message implements Serializable {
 
     private static final long serialVersionUID = 2077931311829475101L;
-
-    private String uuid;
 
     private Object response;
 
