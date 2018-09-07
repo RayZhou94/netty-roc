@@ -14,11 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package remoting;
+package remoting.handler;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
+import utils.AddressUtil;
+
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -29,12 +35,29 @@ public class NettyHandler extends ChannelInboundHandlerAdapter {
 
     private AbstractInvocationHandler handler;
 
+    private final Map<String, Channel> channelMap = new ConcurrentHashMap<>();
+
     public NettyHandler(AbstractInvocationHandler handler){
         this.handler = handler;
     }
 
+    public Map<String, Channel> getChannels(){
+        return channelMap;
+    }
+
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.info("{} connected", handler.getClass().getSimpleName());
+        Channel channel = ctx.channel();
+        InetSocketAddress address = (InetSocketAddress) channel.remoteAddress();
+        channelMap.put(AddressUtil.buildAddress(address), channel);
+        handler.channelActive(ctx);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        Channel channel = ctx.channel();
+        InetSocketAddress address = (InetSocketAddress) channel.remoteAddress();
+        channelMap.remove(AddressUtil.buildAddress(address));
         handler.channelActive(ctx);
     }
 
@@ -43,9 +66,8 @@ public class NettyHandler extends ChannelInboundHandlerAdapter {
         handler.channelRead(ctx, msg);
     }
 
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        handler.channelActive(ctx);
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.fireChannelReadComplete();
     }
 
 }

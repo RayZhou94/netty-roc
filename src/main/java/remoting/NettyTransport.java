@@ -2,6 +2,7 @@ package remoting;
 
 
 import common.Future;
+import remoting.handler.ClientInvocationHandler;
 import threadpool.RpcThreadPool;
 
 import java.util.UUID;

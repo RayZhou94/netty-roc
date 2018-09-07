@@ -16,7 +16,9 @@
  */
 package common;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -25,6 +27,8 @@ import java.io.Serializable;
  * Response
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @ToString
 public class Response extends Message implements Serializable {
 

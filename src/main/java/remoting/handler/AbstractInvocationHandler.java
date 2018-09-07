@@ -1,4 +1,4 @@
-package remoting;
+package remoting.handler;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -25,4 +25,10 @@ public abstract class AbstractInvocationHandler {
      * @param msg
      */
     abstract void channelRead(ChannelHandlerContext ctx, Object msg);
+
+    /**
+     * 服务器处理完数据时触发
+     * @param ctx
+     */
+    abstract void channelReadComplete(ChannelHandlerContext ctx);
 }

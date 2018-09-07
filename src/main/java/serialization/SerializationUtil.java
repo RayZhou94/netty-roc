@@ -2,6 +2,9 @@ package serialization;
 
 import com.caucho.hessian.io.HessianInput;
 import com.caucho.hessian.io.HessianOutput;
+import common.Message;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -38,5 +41,19 @@ public class SerializationUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static Object deCode(Object msg){
+        ByteBuf in = (ByteBuf) msg;
+        byte[] req = new byte[in.readableBytes()];
+        in.readBytes(req);
+        return deserialize(req);
+    }
+
+    public static byte[] inCode(Message message){
+        byte[] bytes = serialize(message);
+        ByteBuf m = Unpooled.buffer(bytes.length);
+        m.writeBytes(bytes);
+        return bytes;
     }
 }

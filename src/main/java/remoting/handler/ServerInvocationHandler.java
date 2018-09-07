@@ -1,9 +1,9 @@
-package remoting;
+package remoting.handler;
 
+import common.Message;
+import common.Request;
 import common.Response;
 import common.Future;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +29,9 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
      * @param message
      * @return
      */
-    Future invoke(Channel channel, Request message) {
+    Future invoke(Channel channel, Message message) {
         log.info("server handler invoke a message {}", message);
-        common.Request request = (common.Request) message.getData();
+        Request request = (Request) message;
 
         //拿到消息中的请求后，解析消息里的方法，进行真正的调用，并且返回结果
         Future future =  methodHandler.process(request);
@@ -41,12 +41,11 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
         defaultResponse.setUuid(message.getUuid());
         defaultResponse.setResponse(result);
 
-        Request response = new Request(defaultResponse.getUuid(), defaultResponse.getResponse());
+        Response response = new Response();
+        response.setUuid(defaultResponse.getUuid());
+        response.setResponse(defaultResponse.getResponse());
         //返回调用结果给客户端
-        byte[] req = SerializationUtil.serialize(response);
-        ByteBuf m = Unpooled.buffer(req.length);
-        m.writeBytes(req);
-        channel.writeAndFlush(m);
+        channel.writeAndFlush(SerializationUtil.inCode(response));
 
         return future;
     }
@@ -63,10 +62,12 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
 
     @Override
     void channelRead(ChannelHandlerContext ctx, Object msg) {
-        ByteBuf in = (ByteBuf) msg;
-        byte[] req = new byte[in.readableBytes()];
-        in.readBytes(req);
-        Request request = (Request) SerializationUtil.deserialize(req);
+        Request request = (Request) SerializationUtil.deCode(msg);
         log.info("server handler invoke a message {}", request);
+    }
+
+    @Override
+    void channelReadComplete(ChannelHandlerContext ctx) {
+
     }
 }
