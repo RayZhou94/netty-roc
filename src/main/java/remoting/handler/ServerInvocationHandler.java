@@ -63,8 +63,10 @@ public class ServerInvocationHandler extends AbstractInvocationHandler {
 
     @Override
     void channelRead(ChannelHandlerContext ctx, Object msg) {
-        log.info("server handler invoke a message {}", msg);
-//        ByteBuf m = Unpooled.buffer(msg);
-//        Request request = SerializationUtil.deserialize()
+        ByteBuf in = (ByteBuf) msg;
+        byte[] req = new byte[in.readableBytes()];
+        in.readBytes(req);
+        Request request = (Request) SerializationUtil.deserialize(req);
+        log.info("server handler invoke a message {}", request);
     }
 }
