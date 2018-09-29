@@ -19,10 +19,10 @@ public class NettyClientTest {
 
         log.info("{}", future.get());
 
-//        Message message1 = new Request();
-//        message1.setMessageId(UUID.randomUUID().toString());
-//        ResponseFuture future1 = (ResponseFuture) new NettyTransport().send(message1);
-//        log.info("{}", future1.get());
+        Request message1 = new Request();
+        message1.setMessageId(UUID.randomUUID().toString());
+        ResponseFuture future1 = (ResponseFuture) new NettyTransport().send(message1);
+        log.info("{}", future1.get());
 
     }
 

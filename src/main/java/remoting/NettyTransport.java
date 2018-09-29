@@ -13,12 +13,17 @@ import threadpool.RpcThreadPool;
 public class NettyTransport {
 
    public Future send(Request request){
-       ClientInvocationHandler handler = new ClientInvocationHandler();
-       NettyClient nettyClient = new NettyClient("localhost", 8001, handler);
+       NettyClient nettyClient = new NettyClient("127.0.0.1", 8001, new ClientInvocationHandler());
        RpcThreadPool.executorService().submit(()-> {
            nettyClient.connect();
        });
-       return handler.sendMessage(request);
+       try {
+           Thread.sleep(1000);
+       } catch (InterruptedException e) {
+           e.printStackTrace();
+       }
+       request.setTargetAddress("127.0.0.1" + ":" + 8001);
+       return nettyClient.sendMessage(request);
    }
 
    public void bind(){

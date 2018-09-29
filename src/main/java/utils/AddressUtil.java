@@ -8,6 +8,6 @@ import java.net.InetSocketAddress;
 public class AddressUtil {
 
     public static String buildAddress(InetSocketAddress address){
-        return address.getHostName() + ":" + address.getPort();
+        return address.getHostString() + ":" + address.getPort();
     }
 }

@@ -5,11 +5,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
+import remoting.pool.ChannelPool;
+import remoting.pool.FuturePool;
 import utils.AddressUtil;
 
 import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by shallowdream on 2018/8/4.
@@ -17,48 +17,40 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ClientInvocationHandler extends SimpleChannelInboundHandler<Response> {
 
-    private volatile Channel channel;
-
-    public Channel getChannel(){
-        return channel;
-    }
-
-    private Map<String, Future> futureMap = new ConcurrentHashMap<>();
-
-
     public Future<Response> sendMessage(Request request){
-        ResponseFuture<Response> future = new ResponseFuture<>(request);
-        futureMap.put(request.getMessageId(), future);
-
         //发送消息，如果未连接，就进行忙等
+        Channel channel = ChannelPool.getServerChannel(request.getTargetAddress());
         while (channel == null){
+            channel = ChannelPool.getServerChannel(request.getTargetAddress());
         }
+
         channel.writeAndFlush(request);
+        AbstractFuture future = new ResponseFuture();
+        future.setMessageId(request.getMessageId());
+        FuturePool.put(request.getMessageId(), future);
         return future;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
-        log.info(AddressUtil.buildAddress(address) + " connected");
-        this.channel  = ctx.channel();
+        ChannelPool.putServerChannel(AddressUtil.buildAddress(address), ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
-        log.info(AddressUtil.buildAddress(address) + " disconnected");
+        ChannelPool.removeServerChannel(AddressUtil.buildAddress(address));
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
-        log.info("channelReadComplete");
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Response response) throws Exception {
-        ResponseFuture future = (ResponseFuture) futureMap.get(response.getMessageId());
-        future.setResponse(response);
         log.info("client receiver a response {}", response);
+        AbstractFuture future = FuturePool.get(response.getMessageId());
+        future.setResponse(response);
     }
 }

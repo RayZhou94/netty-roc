@@ -10,6 +10,8 @@ import java.util.Arrays;
 @ToString
 public class Request extends Message implements Serializable {
 
+    private String targetAddress;
+
     private static final long serialVersionUID = -4105873632549731903L;
 
     private String serviceName;

@@ -8,4 +8,5 @@ import common.Future;
 public interface MethodHandler {
 
     Future process(Object request);
+
 }
