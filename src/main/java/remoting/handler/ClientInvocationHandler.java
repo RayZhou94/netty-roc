@@ -3,53 +3,62 @@ package remoting.handler;
 import common.*;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
-import remoting.NettyFactory;
-import serialization.SerializationUtil;
+import utils.AddressUtil;
+
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by shallowdream on 2018/8/4.
  */
 @Slf4j
-public class ClientInvocationHandler extends AbstractInvocationHandler {
+public class ClientInvocationHandler extends SimpleChannelInboundHandler<Response> {
+
+    private volatile Channel channel;
+
+    public Channel getChannel(){
+        return channel;
+    }
+
+    private Map<String, Future> futureMap = new ConcurrentHashMap<>();
 
 
-    private Channel channel;
+    public Future<Response> sendMessage(Request request){
+        ResponseFuture<Response> future = new ResponseFuture<>(request);
+        futureMap.put(request.getMessageId(), future);
 
-    private DefaultFuture future ;
-
-
-    public Future sendMessage(Message message){
-        Request request = (Request) message;
-
-        future = new DefaultFuture();
         //发送消息，如果未连接，就进行忙等
-        byte[] bytes = SerializationUtil.inCode(request);
-        channel.writeAndFlush(bytes);
-        //在这里直接设置结果Future，但是只有当服务端返回结果后，Future才有结果
-        future.setChannel(channel);
-        future.setCreateTime(System.currentTimeMillis());
-        NettyFactory.registerCallbackMap(request.getUuid(), future);
+        while (channel == null){
+        }
+        channel.writeAndFlush(request);
         return future;
     }
 
     @Override
-    void channelActive(ChannelHandlerContext ctx) {
+    public void channelActive(ChannelHandlerContext ctx) {
+        InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
+        log.info(AddressUtil.buildAddress(address) + " connected");
         this.channel  = ctx.channel();
     }
 
     @Override
-    void channelInactive(ChannelHandlerContext ctx) {
+    public void channelInactive(ChannelHandlerContext ctx) {
+        InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
+        log.info(AddressUtil.buildAddress(address) + " disconnected");
     }
 
     @Override
-    void channelRead(ChannelHandlerContext ctx, Object msg) {
-        Response response = (Response) SerializationUtil.deCode(msg);
-        log.info("client receiver a message {}", response);
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        log.info("channelReadComplete");
     }
 
     @Override
-    void channelReadComplete(ChannelHandlerContext ctx) {
-
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, Response response) throws Exception {
+        ResponseFuture future = (ResponseFuture) futureMap.get(response.getMessageId());
+        future.setResponse(response);
+        log.info("client receiver a response {}", response);
     }
 }

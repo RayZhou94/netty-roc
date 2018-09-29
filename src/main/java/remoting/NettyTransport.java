@@ -2,27 +2,27 @@ package remoting;
 
 
 import common.Future;
+import common.Message;
+import common.Request;
 import remoting.handler.ClientInvocationHandler;
 import threadpool.RpcThreadPool;
-
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Created by shallowdream on 2018/8/2.
  */
 public class NettyTransport {
 
-    static ClientInvocationHandler clientInvocationHandler = new ClientInvocationHandler();
-    static NettyClient nettyClient = new NettyClient("localhost", 8001, clientInvocationHandler);
+   public Future send(Request request){
+       ClientInvocationHandler handler = new ClientInvocationHandler();
+       NettyClient nettyClient = new NettyClient("localhost", 8001, handler);
+       RpcThreadPool.executorService().submit(()-> {
+           nettyClient.connect();
+       });
+       return handler.sendMessage(request);
+   }
 
-    public Future send(Object msg){
-        Request request = new Request(UUID.randomUUID().toString(), msg);
-        ExecutorService executorService = RpcThreadPool.executorService();
-        executorService.execute(()->{
-            nettyClient.connect();
-        });
-        return clientInvocationHandler.sendMessage(request);
-    }
+   public void bind(){
+       new NettyServer(8001);
+   }
 
 }

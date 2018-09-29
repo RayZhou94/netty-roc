@@ -17,14 +17,14 @@
 package common;
 
 
-public interface Future {
+public interface Future<T> {
 
     /**
      * get result.
      *
      * @return result.
      */
-    Object get();
+    T get();
 
     /**
      * check is done.

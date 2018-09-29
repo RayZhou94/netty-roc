@@ -16,9 +16,11 @@
  */
 package remoting.handler;
 
+import common.Message;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import utils.AddressUtil;
 
@@ -31,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * NettyHandler
  */
 @Slf4j
-public class NettyHandler extends ChannelInboundHandlerAdapter {
+public class NettyHandler extends SimpleChannelInboundHandler<Message> {
 
     private AbstractInvocationHandler handler;
 
@@ -58,16 +60,15 @@ public class NettyHandler extends ChannelInboundHandlerAdapter {
         Channel channel = ctx.channel();
         InetSocketAddress address = (InetSocketAddress) channel.remoteAddress();
         channelMap.remove(AddressUtil.buildAddress(address));
-        handler.channelActive(ctx);
+        handler.channelInactive(ctx);
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        handler.channelRead(ctx, msg);
+    protected void channelRead0(ChannelHandlerContext ctx, Message message) throws Exception {
+        handler.channelRead(ctx, message);
     }
 
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        ctx.fireChannelReadComplete();
+        handler.channelReadComplete(ctx);
     }
-
 }

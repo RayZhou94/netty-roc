@@ -17,6 +17,8 @@
 package remoting;
 
 
+import common.Request;
+import common.Response;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -25,9 +27,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
-import remoting.handler.NettyHandler;
 import remoting.handler.ServerInvocationHandler;
+import serialization.RpcDecoder;
+import serialization.RpcEncoder;
 
 /**
  * NettyServer
@@ -35,11 +39,7 @@ import remoting.handler.ServerInvocationHandler;
 @Slf4j
 public class NettyServer {
 
-    private int port;
-
-
     NettyServer(int port){
-        this.port = port;
         try {
             log.info("netty server start... port = {}", port);
             this.start(port);
@@ -60,7 +60,11 @@ public class NettyServer {
                         public void initChannel(SocketChannel ch)
                                 throws Exception {
                             // 注册handler
-                            ch.pipeline().addLast(new NettyHandler(new ServerInvocationHandler()));
+                            ch.pipeline()
+                                    .addLast(new LengthFieldBasedFrameDecoder(65536, 0, 4, 0, 0))
+                                    .addLast(new RpcDecoder(Request.class))
+                                    .addLast(new RpcEncoder(Response.class))
+                                    .addLast(new ServerInvocationHandler());
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);

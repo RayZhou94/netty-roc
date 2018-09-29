@@ -1,6 +1,8 @@
 
 package remoting;
 
+import common.Request;
+import common.Response;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -9,9 +11,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
-import remoting.handler.AbstractInvocationHandler;
-import remoting.handler.NettyHandler;
+import remoting.handler.ClientInvocationHandler;
+import serialization.RpcDecoder;
+import serialization.RpcEncoder;
 
 import java.io.Closeable;
 
@@ -19,19 +23,20 @@ import java.io.Closeable;
  * NettyClient.
  */
 @Slf4j
-public class NettyClient implements Closeable{
+public class NettyClient implements Closeable {
 
     protected Bootstrap b;
 
     protected EventLoopGroup group;
 
-    private AbstractInvocationHandler handler;
+    private ClientInvocationHandler handler;
 
     private String host;
 
     private int port;
 
-    public NettyClient(String host, int port, AbstractInvocationHandler handler){
+    public NettyClient(String host, int port, ClientInvocationHandler handler) {
+
         this.host = host;
         this.port = port;
         this.handler = handler;
@@ -59,7 +64,11 @@ public class NettyClient implements Closeable{
     }
 
     public void initClientChannel(SocketChannel ch) {
-        ch.pipeline().addLast(new NettyHandler(handler));
+        ch.pipeline()
+                .addLast(new RpcEncoder(Request.class))
+                .addLast(new LengthFieldBasedFrameDecoder(65536, 0, 4, 0, 0))
+                .addLast(new RpcDecoder(Response.class))
+                .addLast(new ClientInvocationHandler());
     }
 
     public ChannelFuture connect() {

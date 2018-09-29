@@ -31,9 +31,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @ToString
 public class Response extends Message implements Serializable {
-
     private static final long serialVersionUID = 2077931311829475101L;
 
-    private Object response;
+    private Object data;
 
 }
